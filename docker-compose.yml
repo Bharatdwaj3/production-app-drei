@@ -1,0 +1,39 @@
+name: prd-app
+
+services: 
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: .dockerfile
+    restart: unless-stopped
+    
+    env_file: ./backend/.env
+    ports: 
+      - 4004:4000
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: .dockerfile
+    restart: unless-stopped
+    env_file: ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+    ports:
+      - 5173:5173
+    depends_on:
+      - backend
+
+  puppet:
+    build:
+      context: ./puppet
+      dockerfile: .dockerfile
+    volumes:
+      - ./puppet/manifests:/puppet/manifests
+      - ./puppet/puppet.conf:/puppet/puppet.conf
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/project
+    working_dir: /puppet
+    profiles: ["tools"]
